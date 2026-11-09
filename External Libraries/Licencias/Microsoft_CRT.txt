@@ -1,0 +1,4 @@
+Microsoft Visual C++ Runtime - Microsoft Corporation.
+DLL redistribuibles x64 copiadas de VC/Redist/MSVC/14.51.36231/x64/Microsoft.VC145.CRT.
+Se distribuyen junto al ejecutable para su carga local, sin modificar Windows.
+Documentacion: https://learn.microsoft.com/en-us/cpp/windows/deployment-in-visual-cpp
