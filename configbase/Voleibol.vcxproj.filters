@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="Codigo principal" />
+    <Filter Include="Encabezados de apoyo" />
+    <Filter Include="Shaders" />
+  </ItemGroup>
+  <ItemGroup><ClCompile Include="Voleibol.cpp"><Filter>Codigo principal</Filter></ClCompile></ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="Camera.h"><Filter>Encabezados de apoyo</Filter></ClInclude>
+    <ClInclude Include="Model.h"><Filter>Encabezados de apoyo</Filter></ClInclude>
+    <ClInclude Include="Graficos.h"><Filter>Encabezados de apoyo</Filter></ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Shader\scene.vert"><Filter>Shaders</Filter></None>
+    <None Include="Shader\scene.frag"><Filter>Shaders</Filter></None>
+  </ItemGroup>
+</Project>
