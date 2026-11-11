@@ -1,3 +1,6 @@
-.vs
-Debug
-configInicial/Debug
+.vs/
+configbase/intermedios/
+*.pdb
+*.ilk
+*.ipch
+*.vcxproj.user

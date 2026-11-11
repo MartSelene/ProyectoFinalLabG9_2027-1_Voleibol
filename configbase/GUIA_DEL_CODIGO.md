@@ -1,73 +1,54 @@
-# Cómo revisar esta versión
+# Guia del codigo de voleibol
 
-Abrir `Voleibol.sln` en Visual Studio y después **Código principal → Voleibol.cpp**. El escenario, las animaciones y los controles están en ese CPP. Los encabezados de apoyo se pueden consultar desde la misma solución.
+Abrir Voleibol.sln en Visual Studio, seleccionar Debug / x86 y pulsar Ctrl+F5. El proyecto usa MSVC v143. El directorio de trabajo es la carpeta de la solucion; los recursos se buscan en configbase. Para ejecutar el EXE preparado, conservarlo junto a configbase y sus dos DLL.
 
-Para localizar un cambio durante la presentación, usar **Ctrl+Mayús+F** y buscar una etiqueta con corchetes:
+## Estructura como las practicas
 
-| Buscar | Dónde está |
+- Voleibol.cpp: variables, main, vertices del cubo/plano, texturas, luces, escenario, animaciones y controles.
+- Shader.h: lectura, compilacion y uso de shaders; base del apoyo de clase.
+- Mesh.h: Vertex, Texture, VAO/VBO/EBO y Draw; base del apoyo de clase.
+- Model.h: Assimp, processNode, processMesh y TextureFromFile; base del apoyo de clase. Se adaptaron los colores y el material sin textura.
+- Camera.h: ProcessKeyboard, ProcessMouseMovement, GetViewMatrix; se adapto tambien la camara orbital solicitada.
+- Shader/lighting.vs: model, view, projection y matriz normal.
+- Shader/lighting.frag: CalcDirLight y CalcSpotLight, con Phong como en iluminacion.
+
+## Buscar durante la presentacion
+
+| Tema | Funcion o archivo |
 |---|---|
-| `[P01]` — mallas y shaders | `Graficos.h`: `Mesh::upload` y carga de shaders. |
-| `[P02]` — proyecciones | `Voleibol.cpp`: viewport; `Camera.h`: perspectiva; `Graficos.h`: ortográfica. |
-| `[P03]` — transformaciones | `Voleibol.cpp`: `transform` y funciones que colocan las figuras. |
-| `[P04]` — jerarquía | `Voleibol.cpp`: `DibujarJugador`, brazos y piernas unidos a sus matrices padre. |
-| `[P05]` — modelos y cámara | `Voleibol.cpp`: carga de OBJ; `Model.h`: Assimp; `Camera.h`: vista. |
-| `[P06]` — texturizado | `Graficos.h`: imágenes; `Model.h`: materiales del OBJ; `scene.frag`: UV. |
-| `[P07]` — iluminación | `Shader/scene.frag`: luz ambiente, difusa y brillo; `scene.vert`: normales. |
-| `[P08]` — reflectores | `Shader/scene.frag`: posiciones, cono y atenuación. |
-| `[P09]` — animación | `Voleibol.cpp`: `Animation`; el saque y el trofeo usan el tiempo actualizado aquí. |
-| `[KEYFRAMES]`, `[ANIMACION]`, `[ESCALA]` | `Voleibol.cpp`: trayectoria y tiempos del saque, pausa y tamaño del trofeo. |
-| `[CANCHA]`, `[RED]`, `[GRADAS]`, `[JUGADORES]`, `[BALON]` | `Voleibol.cpp`: posiciones, tamaños y cantidades. |
-| `[COLORES]`, `[CONTROLES]`, `[LETREROS_Y_MARCADOR]` | `Voleibol.cpp`: colores, teclas y colocación de letreros y marcador. |
-| `[TEXTURAS]`, `[CARGA_IMAGEN]` | `Graficos.h`: rutas de imágenes y opciones de carga. |
-| `[ILUMINACION]`, `[POSICIONES_LUCES]` | `Shader/scene.frag`: intensidades y posiciones de las luces. |
-| `[PERSPECTIVA]`, `[VELOCIDAD]`, `[VISTA_INICIAL]` | `Camera.h`: apertura, velocidad y posición inicial. |
-| `[MODELOS]`, `[CARGA_OBJ]` | `Voleibol.cpp` y `Model.h`: rutas y carga de modelos. |
-| `[SOMBRAS]`, `[PROYECCION_SOMBRA]` | `Voleibol.cpp` y `Graficos.h`: dibujo y proyección al piso. |
-| `[INTERFAZ]`, `[PANELES]`, `[FUENTE]` | `Voleibol.cpp` y `Graficos.h`: instrucciones, ubicación y letra de los paneles. |
+| Ventana y ciclo de dibujo | main, linea 87 de Voleibol.cpp |
+| Vertices y buffers P01 | PrepararPrimitivas, linea 405 de Voleibol.cpp |
+| Imagenes y filtros P06 | CargarTextura, linea 453 de Voleibol.cpp |
+| Rutas de las imagenes | CargarTexturas, linea 473 de Voleibol.cpp |
+| Propiedades de las luces P07/P08 | ConfigurarLuces, linea 501 de Voleibol.cpp |
+| Saque por keyframes P10 | PoseSaque, linea 151 de Voleibol.cpp |
+| Actualizacion y pausa P09 | Animation, linea 133 de Voleibol.cpp |
+| Escala del trofeo | EscalaTrofeo, linea 168 de Voleibol.cpp |
+| Matrices padre-hijo P04 | DibujarJugador, linea 200 de Voleibol.cpp |
+| Cancha y medidas P03 | DibujarCancha, linea 226 de Voleibol.cpp |
+| Bancas, trofeo y arbitro | DibujarBancas, linea 276 de Voleibol.cpp |
+| Gradas y butacas OBJ | DibujarGradas, linea 310 de Voleibol.cpp |
+| Sombras simuladas | SombraEn, linea 567 de Voleibol.cpp |
+| Paneles Arial e I | DibujarInterfaz, linea 597 de Voleibol.cpp |
+| Teclas I/J/K y animaciones | KeyCallback, linea 653 de Voleibol.cpp |
+| Movimiento WASD y E/Q | DoMovement, linea 700 de Voleibol.cpp |
 
-Las notas junto a cada bloque indican qué valor se puede ajustar y cuándo hay que cambiarlo en más de un lugar. Después de editar C++ o un encabezado, compilar de nuevo; después de editar un shader, cerrar y volver a ejecutar para cargarlo.
+Las lineas cambian al editar; buscar tambien el nombre con Ctrl+F.
 
-## Organización del CPP
+## Animaciones y controles
 
-| Sección | Qué contiene |
-|---|---|
-| 1. Variables del programa | Cámara, arreglo de teclas, luces, puntos, tiempos y los ocho cuadros clave del saque. |
-| 2. main | Crea la ventana OpenGL, registra los callbacks y carga los dos modelos. En cada ciclo recibe eventos, mueve la cámara, actualiza la animación y dibuja. |
-| 3. Animación | `Animation(dt)` actualiza los tiempos; `PoseSaque()` interpola las poses; `EscalaTrofeo()` cambia el tamaño. `Reiniciar()` restaura el estado. |
-| 4. Escenario | Funciones `DibujarCancha`, `DibujarBancas`, `DibujarGradas`, `DibujarParedYMarcador`, `DibujarReflectores` y `DibujarJugador`. |
-| 5. Dibujar un cuadro | `DibujarPantalla` reúne el escenario, las sombras y los paneles. |
-| 6. Controles | `KeyCallback`, `MouseCallback`, `ScrollCallback` y `DoMovement`, siguiendo el esquema de las prácticas. |
+Espacio inicia el saque de ocho poses durante 3.4 segundos. Animation actualiza tiempoSaque; PoseSaque interpola brazo, rodilla, elevacion y posicion del balon con operaciones explicitas. F enfoca el trofeo y cambia su escala de 0.65 a 1.0 y de regreso en dos segundos. P pausa y R reinicia.
 
-## Encabezados de apoyo
+C/1/2 cambia camaras. WASD y E/Q mueven o giran; arrastrar el mouse orienta; la rueda cambia la distancia orbital. L alterna luces y las sombras simuladas. I muestra u oculta ambos paneles inferiores. J/K suman puntos. Esc cierra.
 
-- `Camera.h`: calcula la vista y la perspectiva; permite primera persona y orbital.
-- `Model.h`: carga los OBJ, sus materiales y texturas mediante Assimp.
-- `Graficos.h`: reúne el dibujo de mallas, la carga de imágenes con SOIL2, shaders, sombras planas y texto. Es un apoyo del proyecto; no es un archivo proporcionado por el profesor.
+La captura F12 se retiro de esta version para mantener el codigo limitado a la base de clase. Las capturas de prueba se realizan con una herramienta externa, que no se incluye en el proyecto.
 
-Las implementaciones de apoyo están en los encabezados y el proyecto compila una sola unidad: `Voleibol.cpp`. Esto sirve para mantener esta práctica pequeña; sus definiciones no se deben incluir en varios CPP a la vez.
+## Sombras e interfaz sencillas
 
-## Relación con el laboratorio
+Las sombras son imagenes semitransparentes dibujadas sobre el piso con traslacion, rotacion y escala. No calculan una proyeccion real desde la luz ni sombras entre objetos. Los paneles Arial son imagenes; el programa elige la imagen de cada estado y los digitos del marcador. No tiene un sistema de generacion de letras por caracter.
 
-Se consultaron P01-P09 de [JhonnyFeik/CGIH-FI](https://github.com/JhonnyFeik/CGIH-FI) en lectura el 08/11/2026. La referencia de P09 es [Animación Básica](https://github.com/JhonnyFeik/CGIH-FI/blob/cd4975cc27f5046ee0320311d8ef44776b156c7f/configbase/Animaci%C3%B3n_B%C3%A1sica.cpp).
+Se mantienen las siete imagenes de materiales descargadas de Internet. Su procedencia y licencia siguen en Textures/Fuentes.json. Las imagenes de interfaz y sombra son apoyos graficos del programa, no nuevos materiales fotograficos.
 
-| Práctica | Aplicación en voleibol |
-|---|---|
-| P01. Introducción a OpenGL | Mallas de triángulos, VAO, VBO, índices y shaders en `Graficos.h`. |
-| P02. Proyecciones | `glViewport` en `DibujarPantalla` y perspectiva en `Camera.h`; la interfaz usa ortográfica. |
-| P03. Modelado geométrico | Cubos y esferas colocados con matrices en las funciones de dibujo. |
-| P04. Modelado jerárquico | En `DibujarJugador`, raíz → hombro → brazo → antebrazo y cadera → pierna → rodilla. |
-| P05. Modelos y cámara | Los OBJ de trofeo y butaca se cargan en `main`; los callbacks controlan la cámara. |
-| P06. Texturizado | Imágenes JPG descargadas, UV, repetición y filtrado en `Graficos.h`, `Model.h` y los shaders. Las fuentes están en `Textures/Fuentes.json`. |
-| P07. Iluminación 1 | Ambiental, difusa de Lambert, especular de Blinn-Phong y normales en `Shader/scene.frag`. |
-| P08. Iluminación 2 | Cuatro reflectores con cono y atenuación; L los alterna. La red usa recorte alfa. |
-| P09. Animación básica | Callback → variable de estado → actualización por ciclo → transformación al dibujar. En esta versión se localiza en `KeyCallback`, `Animation`, `PoseSaque` y `DibujarJugador`. |
+## Base de laboratorio
 
-En P09, N activa `AnimBall`, `Animation()` incrementa `rotBall` y `glm::rotate` aplica el ángulo al balón. En voleibol, Espacio activa el saque, `Animation(dt)` avanza su tiempo y el dibujo usa las poses. Los ocho cuadros clave y su interpolación son la solución del proyecto para el saque; la práctica muestra una rotación continua.
-
-## Qué se conservó y qué se simplificó
-
-Se conservaron las tres zonas, medidas, doce jugadores, árbitro, trofeo, butacas, texturas descargadas, cámaras, saque, escala, luces, sombras, marcador, Arial y letreros de equipos.
-
-El acceso principal ahora es una solución `.sln` preparada. Ya no hay que generar la solución con CMake ni ejecutar scripts. Las bibliotecas x64 están compiladas en `External Libraries/lib/x64`, como archivos de apoyo. No se distribuyen los generadores de recursos ni las herramientas de auditoría en esta carpeta.
-
-Las rutas de recursos son relativas: `Textures`, `Models` y `Shader`, dentro de `configbase`. F12 guarda una captura y no sustituye archivos de capturas anteriores. Las verificaciones automáticas de esta reorganización se guardan por separado; no acreditan revisión del equipo, video ni envío al aula.
+Referencias P01-P10 consultadas en lectura: JhonnyFeik/CGIH-FI, commit 2e31a29f8028ff8754658a31207974f8a95d14bf y las copias historicas conservadas. No se modificaron las practicas. Los apoyos de clase se adaptaron al escenario: no son copias sin cambios. Las dos camaras, las cuatro luces, el marcador y las sombras simuladas se construyen combinando sus matrices, imagenes, callbacks y funciones.

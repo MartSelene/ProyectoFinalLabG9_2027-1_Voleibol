@@ -1,0 +1,19 @@
+VOLEIBOL - PROYECTO FINAL
+
+1. Extraer o clonar todo el proyecto (Voleibol.sln queda en la carpeta principal).
+2. Para ejecutar: abrir Voleibol.exe desde esta carpeta. Conservar configbase y las DLL a su lado.
+3. Para compilar: abrir Voleibol.sln en Visual Studio, seleccionar Debug / x86 y pulsar Ctrl+F5.
+   Se requiere Desarrollo para el escritorio con C++, MSVC v143 y Windows SDK.
+
+Fuente principal: configbase/Voleibol.cpp.
+Apoyos: Shader.h, Mesh.h, Model.h y Camera.h. Shaders: configbase/Shader.
+Imagenes y modelos: configbase/Textures y configbase/Models.
+Guia de ubicaciones: configbase/GUIA_DEL_CODIGO.md.
+
+C/1/2: camaras. WASD y E/Q: movimiento. Arrastrar mouse: orientar.
+Rueda: distancia orbital. Espacio: saque. F: festejo del trofeo.
+P: pausa/reanudacion. L: reflectores y sombras simuladas.
+I: mostrar/ocultar paneles. J/K: sumar puntos. R: reiniciar. Esc: salir.
+
+Configuracion: x86/Win32, MSVC v143, C++14 y OpenGL 3.3 core.
+Las rutas de recursos parten de esta carpeta; el depurador ya tiene ese directorio configurado.

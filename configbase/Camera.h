@@ -1,86 +1,204 @@
 #pragma once
-#include <glm/glm.hpp>
-#include <string>
 
-class Camera {
-public:
-    bool orbital = true;
-    glm::vec3 position() const;
-    glm::mat4 view() const;
-    glm::mat4 projection(float aspect) const;
-    void move(float forward, float right, float vertical, float dt);
-    void turn(float dx, float dy);
-    void zoom(float amount);
-    void reset();
-    void focusTrophy();
-    std::string name() const { return orbital ? "ORBITAL / TV" : "PRIMERA PERSONA"; }
-private:
-    // [VISTA_INICIAL] eye: posicion de primera persona; target: centro de la orbita.
-    glm::vec3 eye = {12.f,1.7f,7.f};
-    glm::vec3 target = {0,1,0};
-    float yaw = -145.f, pitch = -5.f;
-    // Angulo horizontal, inclinacion y distancia inicial de la camara orbital.
-    float orbitYaw = 43.f, orbitPitch = 35.f, distance = 27.f;
-    glm::vec3 front() const;
+// Std. Includes
+#include <vector>
+
+// GL Includes
+#include <GL/glew.h>
+
+#include <glm/glm.hpp>
+#include <glm/gtc/matrix_transform.hpp>
+
+// DIRECCIONES: opciones que reciben las funciones de movimiento.
+enum Camera_Movement
+{
+	FORWARD,
+	BACKWARD,
+	LEFT,
+	RIGHT,
+    UP,
+    DOWN
 };
 
+// AJUSTES: velocidad, sensibilidad y orientacion inicial.
+const GLfloat YAW = -90.0f;
+const GLfloat PITCH = 0.0f;
+const GLfloat SPEED = 6.0f;
+const GLfloat SENSITIVTY = 0.25f;
+const GLfloat ZOOM = 45.0f;
 
-#include <glm/gtc/matrix_transform.hpp>
-#include <algorithm>
-#include <cmath>
+// CAMARA: posicion, orientacion y modos orbital y primera persona.
+class Camera
+{
+public:
+    bool orbital = true;
+    GLfloat orbitYaw = 43.0f, orbitPitch = 35.0f, distance = 27.0f;
+    glm::vec3 target = glm::vec3(0,1,0);
+	// Constructor with vectors
+	Camera(glm::vec3 position = glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3 up = glm::vec3(0.0f, 1.0f, 0.0f), GLfloat yaw = YAW, GLfloat pitch = PITCH) : front(glm::vec3(0.0f, 0.0f, -1.0f)), movementSpeed(SPEED), mouseSensitivity(SENSITIVTY), zoom(ZOOM)
+	{
+		this->position = position;
+		this->worldUp = up;
+		this->yaw = yaw;
+		this->pitch = pitch;
+		this->updateCameraVectors();
+	}
 
-glm::vec3 Camera::front() const {
-    float y = glm::radians(yaw), p = glm::radians(pitch);
-    return glm::normalize(glm::vec3(std::cos(y)*std::cos(p), std::sin(p), std::sin(y)*std::cos(p)));
-}
-glm::vec3 Camera::position() const {
-    if (!orbital) return eye;
-    float y = glm::radians(orbitYaw), p = glm::radians(orbitPitch);
-    return target + distance * glm::vec3(std::cos(y)*std::cos(p), std::sin(p), std::sin(y)*std::cos(p));
-}
-// [P05][CAMARA_SINTETICA] Vista desde primera persona o camara orbital.
-glm::mat4 Camera::view() const {
-    auto e = position();
-    return glm::lookAt(e, orbital ? target : e+front(), glm::vec3(0,1,0));
-}
-// [P02][PERSPECTIVA] 48 grados de apertura; .1 y 120 son los limites de vision.
-glm::mat4 Camera::projection(float aspect) const {
-    return glm::perspective(glm::radians(48.f), aspect, .1f, 120.f);
-}
-// [VELOCIDAD] 7.f mueve primera persona; 45.f gira y 10.f acerca la orbita.
-void Camera::move(float forward, float right, float vertical, float dt) {
-    if (orbital) {
-        orbitYaw += right*45.f*dt;
-        distance = std::clamp(distance-forward*10.f*dt, 8.f, 50.f);
-        orbitPitch = std::clamp(orbitPitch+vertical*30.f*dt, 8.f, 78.f);
-    } else {
-        // Navegación sobre el suelo. E/Q permite elevarse para inspeccionar modelos.
-        glm::vec3 f = glm::normalize(glm::vec3(front().x,0,front().z));
-        glm::vec3 r = glm::normalize(glm::cross(f, glm::vec3(0,1,0)));
-        eye += (f*forward + r*right + glm::vec3(0,vertical,0))*7.f*dt;
-        eye.x = std::clamp(eye.x, -19.f, 19.f);
-        eye.z = std::clamp(eye.z, -13.f, 13.f);
-        eye.y = std::clamp(eye.y, 1.1f, 12.f);
+	// Constructor with scalar values
+	Camera(GLfloat posX, GLfloat posY, GLfloat posZ, GLfloat upX, GLfloat upY, GLfloat upZ, GLfloat yaw, GLfloat pitch) : front(glm::vec3(0.0f, 0.0f, -1.0f)), movementSpeed(SPEED), mouseSensitivity(SENSITIVTY), zoom(ZOOM)
+	{
+		this->position = glm::vec3(posX, posY, posZ);
+		this->worldUp = glm::vec3(upX, upY, upZ);
+		this->yaw = yaw;
+		this->pitch = pitch;
+		this->updateCameraVectors();
+	}
+
+	// VISTA: apunta al centro en orbital o hacia el frente en primera persona.
+	glm::mat4 GetViewMatrix()
+	{
+		if (orbital) return glm::lookAt(GetPosition(), target, glm::vec3(0,1,0));
+        return glm::lookAt(this->position, this->position + this->front, this->up);
+	}
+
+	// TECLADO: cambia distancia/giro orbital o desplaza la camara.
+	void ProcessKeyboard(Camera_Movement direction, GLfloat deltaTime)
+	{
+		if (orbital) {
+            if (direction == FORWARD) distance -= 10.0f*deltaTime;
+            if (direction == BACKWARD) distance += 10.0f*deltaTime;
+            if (direction == LEFT) orbitYaw -= 45.0f*deltaTime;
+            if (direction == RIGHT) orbitYaw += 45.0f*deltaTime;
+            if (direction == UP) orbitPitch += 30.0f*deltaTime;
+            if (direction == DOWN) orbitPitch -= 30.0f*deltaTime;
+            if (distance < 8) distance = 8;
+            if (distance > 50) distance = 50;
+            if (orbitPitch < 8) orbitPitch = 8;
+            if (orbitPitch > 78) orbitPitch = 78;
+            return;
+        }
+        GLfloat velocity = this->movementSpeed * deltaTime;
+
+		if (direction == FORWARD)
+		{
+			this->position += glm::normalize(glm::vec3(front.x,0,front.z)) * velocity;
+		}
+
+		if (direction == BACKWARD)
+		{
+			this->position -= glm::normalize(glm::vec3(front.x,0,front.z)) * velocity;
+		}
+
+		if (direction == LEFT)
+		{
+			this->position -= this->right * velocity;
+		}
+
+		if (direction == RIGHT)
+		{
+			this->position += this->right * velocity;
+		}
+	}
+
+	// ALTURA: E/Q eleva la vista o cambia la inclinacion orbital.
+	void SetHeight(Camera_Movement direction, GLfloat deltaTime) {
+        if (orbital) { ProcessKeyboard(direction,deltaTime); return; }
+        if (direction == UP) position.y += 7*deltaTime;
+        if (direction == DOWN) position.y -= 7*deltaTime;
+        if (position.y < 1.1f) position.y = 1.1f;
+        if (position.y > 12) position.y = 12;
     }
-}
-// [SENSIBILIDAD_MOUSE] Factores .25/.20 orbital y .15 primera persona.
-void Camera::turn(float dx, float dy) {
-    if (orbital) {
-        orbitYaw -= dx*.25f;
-        orbitPitch = std::clamp(orbitPitch+dy*.20f, 8.f, 78.f);
-    } else {
-        yaw += dx*.15f;
-        pitch = std::clamp(pitch-dy*.15f, -85.f, 85.f);
+    // GIRO: aplica el desplazamiento horizontal y vertical del mouse.
+	void ProcessMouseMovement(GLfloat xOffset, GLfloat yOffset, GLboolean constrainPitch = true)
+	{
+		if (orbital) {
+            orbitYaw += xOffset*0.25f;
+            orbitPitch += yOffset*0.20f;
+            if (orbitPitch < 8) orbitPitch = 8;
+            if (orbitPitch > 78) orbitPitch = 78;
+            return;
+        }
+        xOffset *= this->mouseSensitivity;
+		yOffset *= this->mouseSensitivity;
+
+		this->yaw += xOffset;
+		this->pitch += yOffset;
+
+		// Make sure that when pitch is out of bounds, screen doesn't get flipped
+		if (constrainPitch)
+		{
+			if (this->pitch > 89.0f)
+			{
+				this->pitch = 89.0f;
+			}
+
+			if (this->pitch < -89.0f)
+			{
+				this->pitch = -89.0f;
+			}
+		}
+
+		// Update Front, Right and Up Vectors using the updated Eular angles
+		this->updateCameraVectors();
+	}
+
+	// ZOOM ORBITAL: la rueda cambia la distancia, limitada entre 8 y 50.
+	void ProcessMouseScroll(GLfloat yOffset) {
+        if (orbital) {
+            distance -= yOffset*1.5f;
+            if (distance < 8) distance = 8;
+            if (distance > 50) distance = 50;
+        }
     }
-}
-void Camera::zoom(float amount) { distance = std::clamp(distance-amount*1.5f, 8.f,50.f); }
-void Camera::reset() { *this = Camera(); }
-// [ENFOQUE_TROFEO] F usa este objetivo, distancia y angulos para mostrar el festejo.
-void Camera::focusTrophy() {
-    orbital = true;
-    target = {0,1.8f,-9};
-    distance = 8.f;
-    // Vista lateral del trofeo para que el arbitro no lo tape durante el festejo.
-    orbitYaw = 20.f;
-    orbitPitch = 25.f;
-}
+
+	GLfloat GetZoom()
+	{
+		return this->zoom;
+	}
+
+	// POSICION: calcula la orbita con seno y coseno, o devuelve la posicion libre.
+	glm::vec3 GetPosition()
+	{
+		if (orbital) {
+            GLfloat y = glm::radians(orbitYaw), p = glm::radians(orbitPitch);
+            return target + distance*glm::vec3(cos(y)*cos(p),sin(p),sin(y)*cos(p));
+        }
+        return this->position;
+	}
+
+	glm::vec3 GetFront()
+	{
+		return this->front;
+	}
+
+private:
+	// Camera Attributes
+	glm::vec3 position;
+	glm::vec3 front;
+	glm::vec3 up;
+	glm::vec3 right;
+	glm::vec3 worldUp;
+
+	// Eular Angles
+	GLfloat yaw;
+	GLfloat pitch;
+
+	// Camera options
+	GLfloat movementSpeed;
+	GLfloat mouseSensitivity;
+	GLfloat zoom;
+
+	// ORIENTACION: calcula frente, derecha y arriba a partir de yaw y pitch.
+	void updateCameraVectors()
+	{
+		// Calculate the new Front vector
+		glm::vec3 front;
+		front.x = cos(glm::radians(this->yaw)) * cos(glm::radians(this->pitch));
+		front.y = sin(glm::radians(this->pitch));
+		front.z = sin(glm::radians(this->yaw)) * cos(glm::radians(this->pitch));
+		this->front = glm::normalize(front);
+		// Also re-calculate the Right and Up vector
+		this->right = glm::normalize(glm::cross(this->front, this->worldUp));  // Normalize the vectors, because their length gets closer to 0 the more you look up or down which results in slower movement.
+		this->up = glm::normalize(glm::cross(this->right, this->front));
+	}
+};

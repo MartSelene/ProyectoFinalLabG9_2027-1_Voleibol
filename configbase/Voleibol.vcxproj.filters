@@ -9,10 +9,11 @@
   <ItemGroup>
     <ClInclude Include="Camera.h"><Filter>Encabezados de apoyo</Filter></ClInclude>
     <ClInclude Include="Model.h"><Filter>Encabezados de apoyo</Filter></ClInclude>
-    <ClInclude Include="Graficos.h"><Filter>Encabezados de apoyo</Filter></ClInclude>
+    <ClInclude Include="Shader.h"><Filter>Encabezados de apoyo</Filter></ClInclude>
+    <ClInclude Include="Mesh.h"><Filter>Encabezados de apoyo</Filter></ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <None Include="Shader\scene.vert"><Filter>Shaders</Filter></None>
-    <None Include="Shader\scene.frag"><Filter>Shaders</Filter></None>
+    <None Include="Shader\lighting.vs"><Filter>Shaders</Filter></None>
+    <None Include="Shader\lighting.frag"><Filter>Shaders</Filter></None>
   </ItemGroup>
 </Project>
